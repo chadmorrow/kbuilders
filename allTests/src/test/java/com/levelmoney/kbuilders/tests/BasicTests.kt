@@ -11,14 +11,16 @@ import kotlin.test.assertEquals
 
 public class BasicTests {
 
-    Test fun testBasic() {
+    @Test
+    fun testBasic() {
         val basic = buildBasicObject {
             value = 5
         }
         assertEquals(basic.value, 5)
     }
 
-    Test fun testRebuild() {
+    @Test
+    fun testRebuild() {
         val first = buildRebuildObject {
             value = 5
         }
@@ -29,22 +31,37 @@ public class BasicTests {
         assertEquals(second.value, 6)
     }
 
-    Test fun testParent() {
+    @Test
+    fun testParent() {
         val parent = buildParentObject {
             child = buildBasicObject { value = 5 }
         }
         assertEquals(parent.child.value, 5)
     }
 
-    Test fun testNested() {
+    @Test
+    fun testNested() {
         val parent = buildNestedParentObject {
             child = buildChildObject { value = 5 }
         }
         assertEquals(parent.child.value, 5)
     }
 
-    Test fun testGoogleStyle() {
+    @Test
+    fun testGoogleStyle() {
         val first = buildGoogleBuilderObject {
+            value = 1
+        }
+        val second = first.rebuild {
+            value = 2
+        }
+        assertEquals(first.value, 1)
+        assertEquals(second.value, 2)
+    }
+
+    @Test
+    fun testWire2() {
+        val first = buildWire2Object {
             value = 1
         }
         val second = first.rebuild {

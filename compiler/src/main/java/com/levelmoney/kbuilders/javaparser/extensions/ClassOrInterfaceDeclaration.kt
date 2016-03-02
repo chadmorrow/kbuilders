@@ -69,6 +69,13 @@ private fun ClassOrInterfaceDeclaration.getParentCopyStaticFactory(): MethodDecl
     }
 }
 
+private fun ClassOrInterfaceDeclaration.getParentNewBuilder(): MethodDeclaration? {
+    return getParentClass()!!.getMethods().firstOrNull {
+        it.hasParameters(0)
+                && it.name.equals("newBuilder")
+    }
+}
+
 fun ClassOrInterfaceDeclaration.getBuildMethod(): MethodDeclaration? {
     return getMethods().firstOrNull { it.isBuildMethod () }
 }
@@ -99,19 +106,24 @@ fun ClassOrInterfaceDeclaration.assertIsBuilder() {
  *
  * Thanks Google...
  */
-private fun ClassOrInterfaceDeclaration.builderGetCtor(): String {
-    return getDefaultCtor()?.name ?:getParentStaticFactory()!!.name
+
+private data class BuilderInfo(var isInstanceMethod: Boolean = false)
+
+private fun ClassOrInterfaceDeclaration.builderGetCtor(): String? {
+    return getDefaultCtor()?.name ?:getParentStaticFactory()?.name
 }
-private fun ClassOrInterfaceDeclaration.builderGetCopyCtor(): String? {
-    return getCopyCtor()?.name ?:getParentCopyStaticFactory()?.name
+private fun ClassOrInterfaceDeclaration.builderGetCopyCtor(info: BuilderInfo): String? {
+    return getCopyCtor()?.name ?: getParentCopyStaticFactory()?.name ?: getParentNewBuilder()?.name.apply {
+        info.isInstanceMethod = true
+    }
 }
 
-fun ClassOrInterfaceDeclaration.getCreator(config: Config): String {
+fun ClassOrInterfaceDeclaration.getCreator(config: Config): String? {
     assertIsBuilder()
     val parent = parentNode as ClassOrInterfaceDeclaration
     val type = parent.name
     val inline = if (config.inline) "inline " else ""
-    val newBuilder = builderGetCtor()
+    val newBuilder = builderGetCtor() ?: return null
     return """${inline}fun build$type(fn: $type.Builder.() -> Unit): $type = $type.$newBuilder().apply(fn).build()"""
 }
 
@@ -120,8 +132,11 @@ fun ClassOrInterfaceDeclaration.getRebuild(config: Config): String? {
     val parent = parentNode as ClassOrInterfaceDeclaration
     val type = parent.name
     val inline = if (config.inline) "inline " else ""
-    val newBuilder = builderGetCopyCtor() ?: return null
-    return """${inline}fun $type.rebuild(fn: $type.Builder.() -> Unit): $type = $type.$newBuilder(this).apply(fn).build()""""""
+    val info = BuilderInfo()
+    val newBuilder = builderGetCopyCtor(info) ?: return null
+    val staticPrefix = if (!info.isInstanceMethod) "$type." else ""
+    val arg = if (!info.isInstanceMethod) "this@rebuild" else ""
+    return """${inline}fun $type.rebuild(fn: $type.Builder.() -> Unit): $type = $staticPrefix$newBuilder($arg).apply(fn).build()"""
 }
 
 fun ClassOrInterfaceDeclaration.getMethodStrings(config: Config): List<String> {
@@ -129,5 +144,5 @@ fun ClassOrInterfaceDeclaration.getMethodStrings(config: Config): List<String> {
     val rebuild = getRebuild(config)
     if (rebuild != null) retval.add(rebuild)
     retval.addAll(getBuilderMethods().flatMap { it.toKotlin(config) })
-    return retval
+    return retval.filterNotNull()
 }
