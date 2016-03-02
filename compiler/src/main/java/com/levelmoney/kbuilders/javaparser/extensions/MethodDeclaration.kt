@@ -20,49 +20,48 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.MethodDeclaration
 import com.levelmoney.kbuilders.Config
 
-public fun MethodDeclaration.hasParameters(count: Int? = null): Boolean {
-    val params = getParameters()
-    if (params == null) return count == 0
-    return count == null || params.size() == count
+fun MethodDeclaration.hasParameters(count: Int? = null): Boolean {
+    val params = parameters ?: return count == 0
+    return count == null || params.size == count
 }
 
-public fun MethodDeclaration.isBuildMethod():Boolean {
-    return getName().equals("build") && !getType().toString().equals("void")
+fun MethodDeclaration.isBuildMethod():Boolean {
+    return name.equals("build") && !type.toString().equals("void")
 }
 
-public fun MethodDeclaration.toKotlin(config: Config): List<String> {
+fun MethodDeclaration.toKotlin(config: Config): List<String> {
     val retval = arrayListOf(baseKotlin(config))
     // Once we can reliably link TypeParameter <-> ClassOrInterfaceDeclaration, we can add a shortcut method here.
     return retval
 }
 
-public fun MethodDeclaration.baseKotlin(config: Config): String {
+fun MethodDeclaration.baseKotlin(config: Config): String {
     assertIsBuilder()
     val builderClass = getClassOrInterface()
     val enclosing = builderClass.getTypeForThisBuilder()
-    val builderName = builderClass.getName()
-    val type = kotlinifyType(getParameters().first().getType().toString())
-    val name = getName()
-    val inline = if (config.inline) " inline " else " "
-    return "public${inline}fun $enclosing.$builderName.${config.methodPrefix}$name(fn: () -> $type): $enclosing.$builderName = $name(fn())"
+    val builderName = builderClass.name
+    val type = kotlinifyType(parameters.first().type.toString())
+    val name = name
+    val inline = if (config.inline) "inline " else ""
+    return "${inline}fun $enclosing.$builderName.${config.methodPrefix}$name(fn: () -> $type): $enclosing.$builderName = $name(fn())"
 }
 
-public fun MethodDeclaration.builderKotlin(config: Config): String {
+fun MethodDeclaration.builderKotlin(config: Config): String {
     assertIsBuilder()
     val builderClass = getClassOrInterface()
     val enclosing = builderClass.getTypeForThisBuilder()
-    val builderName = builderClass.getName()
-    val type = kotlinifyType(getParameters().first().getType().toString())
-    val name = getName()
-    val inline = if (config.inline) " inline " else " "
-    return "public${inline}fun $enclosing.$builderName.${config.methodPrefix}${name}Built(fn: $type.$builderName.() -> $type.$builderName): $enclosing.$builderName = $name(build$type{fn()})"
+    val builderName = builderClass.name
+    val type = kotlinifyType(parameters.first().type.toString())
+    val name = name
+    val inline = if (config.inline) "inline " else ""
+    return "${inline}fun $enclosing.$builderName.${config.methodPrefix}${name}Built(fn: $type.$builderName.() -> $type.$builderName): $enclosing.$builderName = $name(build$type{fn()})"
 }
 
-public fun MethodDeclaration.getClassOrInterface(): ClassOrInterfaceDeclaration {
-    return getParentNode() as ClassOrInterfaceDeclaration
+fun MethodDeclaration.getClassOrInterface(): ClassOrInterfaceDeclaration {
+    return parentNode as ClassOrInterfaceDeclaration
 }
 
-public fun kotlinifyType(type: String): String {
+fun kotlinifyType(type: String): String {
     return when (type) {
         "byte" -> "Byte"
         "short" -> "Short"
@@ -76,13 +75,13 @@ public fun kotlinifyType(type: String): String {
     }
 }
 
-public fun kotlinifyOther(type: String): String {
+fun kotlinifyOther(type: String): String {
     return when {
         type.endsWith("[]") -> kotlinifyType(type.replace("[]", "")) + "Array"
         else -> type
     }
 }
 
-public fun MethodDeclaration.assertIsBuilder() {
+fun MethodDeclaration.assertIsBuilder() {
     getClassOrInterface().assertIsBuilder()
 }

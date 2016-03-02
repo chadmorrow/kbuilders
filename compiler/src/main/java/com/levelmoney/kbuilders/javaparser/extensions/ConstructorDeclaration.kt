@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package levelmoney.kbuilders.javaparser.extensions
+package com.levelmoney.kbuilders.javaparser.extensions
 
 import com.github.javaparser.ast.body.ConstructorDeclaration
 
-public fun ConstructorDeclaration.hasParameters(count: Int? = null): Boolean {
-    val params = getParameters()
-    if (params == null) return count == 0
-    return count == null || params.size() == count
+fun ConstructorDeclaration.hasParameters(count: Int? = null): Boolean {
+    val params = parameters ?: return count == 0
+    return count == null || params.size == count
 }

@@ -18,8 +18,10 @@ package com.levelmoney.kbuilders.javaparser.adapters
 
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.EnumDeclaration
+import com.github.javaparser.ast.body.ModifierSet
 import com.github.javaparser.ast.body.TypeDeclaration
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter
+import java.lang.reflect.Modifier
 
 public class ClassNameCollectorVisitor(
         val pakage: String,
@@ -36,6 +38,7 @@ public class ClassNameCollectorVisitor(
     private fun visitHelper(n: TypeDeclaration, arg: MutableList<String>) {
         val name = n.getName()
         if (seen.contains(name)) return
+        if (!Modifier.isPublic(n.modifiers)) return
         seen.add(name)
         val cat = pakage + "." + name
         arg.add(cat)

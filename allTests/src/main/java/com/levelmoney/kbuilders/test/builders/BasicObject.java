@@ -31,12 +31,23 @@ public final class BasicObject {
 
         public Builder value(int value) {
             this.value = value;
+
+            Person bilbo = new Person();
+
+
+            Person frodo = new Person.Builder(bilbo)
+                    .firstName("Frodo")
+                    .build();
+
+            frodo.getClass();
+
             return this;
         }
 
         public BasicObject build() {
             return new BasicObject(this);
         }
+
     }
 
 }

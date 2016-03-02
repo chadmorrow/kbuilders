@@ -28,7 +28,7 @@ import java.io.File
  * java -jar kbuilder.jar --javaRoot=<dir> --kotlinRoot=<dir>
  */
 fun main(args : Array<String>) {
-    if (args.size() < 2) {
+    if (args.size < 2) {
         println("Usage: java -jar kbuilder.jar --javaRoot=<dir> --kotlinRoot=<dir>")
         return
     }
@@ -47,14 +47,14 @@ fun main(args : Array<String>) {
             methodPrefix= options.valueOf("methodPrefix")?.toString()?:""
     )
     val dir = File(javaRoot)
-    dir.recurse {
-        if (it.isFile()) {
+    dir.walkTopDown().forEach {
+        if (it.isFile) {
             val pkgAndText = generatePackageAndText(it, config)
             if (pkgAndText != null) {
-                val name = it.getName().replace("."+it.extension, ".kt")
+                val name = it.name.replace("."+it.extension, ".kt")
                 val (pkg, text) = pkgAndText
-                val dest = File(kotlinRoot, pkg.split("\\.").join("/") + "/" + name)
-                dest.getParentFile().mkdirs()
+                val dest = File(kotlinRoot, pkg.split("\\.").joinToString("/") + "/" + name)
+                dest.parentFile.mkdirs()
                 dest.writeText(text)
             }
         }
@@ -65,9 +65,9 @@ fun main(args : Array<String>) {
 /**
  * Generates a full kotlin file from the provided java files.
  */
-public fun generatePackageAndText(file: File, config: Config): Pair<String, String>? {
+fun generatePackageAndText(file: File, config: Config): Pair<String, String>? {
     val cu = JavaParser.parse(file)
-    val pakage = cu.getPackage().getName().toString()
+    val pakage = cu.`package`.name.toString()
     val imports = cu.getRequiredImports()
     val builders = cu.getBuilders()
     if (builders.isEmpty()) return null
@@ -75,8 +75,8 @@ public fun generatePackageAndText(file: File, config: Config): Pair<String, Stri
     return Pair(pakage,
 """package $pakage
 
-${imports.map{ "import " + it }.join("\n")}
+${imports.map{ "import " + it }.joinToString("\n")}
 
-${methods.join("\n")}
+${methods.joinToString("\n")}
 """)
 }
