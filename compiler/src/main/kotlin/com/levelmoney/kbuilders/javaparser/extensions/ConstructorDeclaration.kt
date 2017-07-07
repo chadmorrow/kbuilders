@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package com.levelmoney.kbuilders
+package com.levelmoney.kbuilders.javaparser.extensions
 
-import joptsimple.OptionSet
-import kotlin.properties.Delegates
+import com.github.javaparser.ast.body.ConstructorDeclaration
 
-public data class Config (val inline: Boolean)
+fun ConstructorDeclaration.hasParameters(count: Int? = null): Boolean {
+    val params = parameters ?: return count == 0
+    return count == null || params.size == count
+}

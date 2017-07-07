@@ -1,6 +1,5 @@
 package com.levelmoney.kbuilders.tests
 
-import com.levelmoney.kbuilders.test.builders.*
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -9,16 +8,16 @@ import kotlin.test.assertEquals
  * Copyright(c) 2015 Level, Inc.
  */
 
-public class BasicTests {
+class BasicTests {
 
-    Test fun testBasic() {
+    @Test fun testBasic() {
         val basic = buildBasicObject {
             value = 5
         }
         assertEquals(basic.value, 5)
     }
 
-    Test fun testRebuild() {
+    @Test fun testRebuild() {
         val first = buildRebuildObject {
             value = 5
         }
@@ -29,21 +28,21 @@ public class BasicTests {
         assertEquals(second.value, 6)
     }
 
-    Test fun testParent() {
+    @Test fun testParent() {
         val parent = buildParentObject {
             child = buildBasicObject { value = 5 }
         }
         assertEquals(parent.child.value, 5)
     }
 
-    Test fun testNested() {
+    @Test fun testNested() {
         val parent = buildNestedParentObject {
             child = buildChildObject { value = 5 }
         }
         assertEquals(parent.child.value, 5)
     }
 
-    Test fun testGoogleStyle() {
+    @Test fun testGoogleStyle() {
         val first = buildGoogleBuilderObject {
             value = 1
         }

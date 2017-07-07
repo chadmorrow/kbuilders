@@ -19,77 +19,76 @@ package com.levelmoney.kbuilders.javaparser.extensions
 import com.github.javaparser.ast.body.*
 import com.github.javaparser.ast.type.ReferenceType
 import com.levelmoney.kbuilders.Config
-import levelmoney.kbuilders.javaparser.extensions.hasParameters
 
-public fun ClassOrInterfaceDeclaration.getInternalClasses(): List<ClassOrInterfaceDeclaration> {
-    return getMembers().filterIsInstance<ClassOrInterfaceDeclaration>()
+fun ClassOrInterfaceDeclaration.getInternalClasses(): List<ClassOrInterfaceDeclaration> {
+    return members.filterIsInstance<ClassOrInterfaceDeclaration>()
 }
 
-public fun ClassOrInterfaceDeclaration.getParentClass(): ClassOrInterfaceDeclaration? {
-    return getParentNode() as ClassOrInterfaceDeclaration
+fun ClassOrInterfaceDeclaration.getParentClass(): ClassOrInterfaceDeclaration? {
+    return parentNode as ClassOrInterfaceDeclaration
 }
 
 // This could return false positives but should be adequate for v1.0
-public fun ClassOrInterfaceDeclaration.getBuilderClass(): ClassOrInterfaceDeclaration? {
+fun ClassOrInterfaceDeclaration.getBuilderClass(): ClassOrInterfaceDeclaration? {
     return getInternalClasses().firstOrNull { it.isBuilder() }
 }
 
-public fun ClassOrInterfaceDeclaration.getBuilderMethods(): List<MethodDeclaration> {
+fun ClassOrInterfaceDeclaration.getBuilderMethods(): List<MethodDeclaration> {
     return getMethods().filter {
-        it.getType().toString().equals(getName()) && it.getParameters()?.size()?:0 > 0
+        it.type.toString() == name && it.parameters?.size?:0 > 0
     }
 }
 
-public fun ClassOrInterfaceDeclaration.getDefaultCtor(): ConstructorDeclaration? {
+fun ClassOrInterfaceDeclaration.getDefaultCtor(): ConstructorDeclaration? {
     return getConstructors().firstOrNull {
-        it.hasParameters(0) && it.getModifiers().and(ModifierSet.PUBLIC) != 0
+        it.hasParameters(0) && it.modifiers.and(ModifierSet.PUBLIC) != 0
     }
 }
 
-public fun ClassOrInterfaceDeclaration.getCopyCtor(): ConstructorDeclaration? {
+fun ClassOrInterfaceDeclaration.getCopyCtor(): ConstructorDeclaration? {
     return getConstructors().firstOrNull {
         it.hasParameters(1)
-                && it.getParameters()[0].getType().toString().equals(getParentClass()!!.getName())
-                && it.getModifiers().and(ModifierSet.PUBLIC) != 0
+                && it.parameters[0].type.toString() == getParentClass()!!.name
+                && it.modifiers.and(ModifierSet.PUBLIC) != 0
     }
 }
 
 private fun ClassOrInterfaceDeclaration.getParentStaticFactory(): MethodDeclaration? {
     return getParentClass()!!.getMethods().firstOrNull {
         it.hasParameters(0)
-                && it.getName().equals("newBuilder")
+                && it.name == "newBuilder"
     }
 }
 
 private fun ClassOrInterfaceDeclaration.getParentCopyStaticFactory(): MethodDeclaration? {
     return getParentClass()!!.getMethods().firstOrNull {
         it.hasParameters(1)
-                && it.getParameters()[0].getType().toString().equals(getParentClass()!!.getName())
-                && it.getName().equals("newBuilder")
+                && it.parameters[0].type.toString() == getParentClass()!!.name
+                && it.name == "newBuilder"
     }
 }
 
-public fun ClassOrInterfaceDeclaration.getBuildMethod(): MethodDeclaration? {
+fun ClassOrInterfaceDeclaration.getBuildMethod(): MethodDeclaration? {
     return getMethods().firstOrNull { it.isBuildMethod () }
 }
 
-public fun ClassOrInterfaceDeclaration.isBuilder(): Boolean {
+fun ClassOrInterfaceDeclaration.isBuilder(): Boolean {
     return getBuildMethod() != null
 }
 
-public fun ClassOrInterfaceDeclaration.getTypeForThisBuilder(): ReferenceType {
-    return getBuildMethod()!!.getType() as ReferenceType
+fun ClassOrInterfaceDeclaration.getTypeForThisBuilder(): ReferenceType {
+    return getBuildMethod()!!.type as ReferenceType
 }
 
-public fun ClassOrInterfaceDeclaration.getMethods(): List<MethodDeclaration> {
-    return getMembers().filterIsInstance<MethodDeclaration>()
+fun ClassOrInterfaceDeclaration.getMethods(): List<MethodDeclaration> {
+    return members.filterIsInstance<MethodDeclaration>()
 }
 
-public fun ClassOrInterfaceDeclaration.getConstructors(): List<ConstructorDeclaration> {
-    return getMembers().filterIsInstance<ConstructorDeclaration>()
+fun ClassOrInterfaceDeclaration.getConstructors(): List<ConstructorDeclaration> {
+    return members.filterIsInstance<ConstructorDeclaration>()
 }
 
-public fun ClassOrInterfaceDeclaration.assertIsBuilder() {
+fun ClassOrInterfaceDeclaration.assertIsBuilder() {
     if (!isBuilder()) throw IllegalStateException()
 }
 
@@ -100,16 +99,16 @@ public fun ClassOrInterfaceDeclaration.assertIsBuilder() {
  * Thanks Google...
  */
 private fun ClassOrInterfaceDeclaration.builderGetCtor(): String {
-    return getDefaultCtor()?.getName()?:getParentStaticFactory()!!.getName()
+    return getDefaultCtor()?.name ?:getParentStaticFactory()!!.name
 }
 private fun ClassOrInterfaceDeclaration.builderGetCopyCtor(): String? {
-    return getCopyCtor()?.getName()?:getParentCopyStaticFactory()?.getName()
+    return getCopyCtor()?.name ?:getParentCopyStaticFactory()?.name
 }
 
-public fun ClassOrInterfaceDeclaration.getCreator(config: Config): String {
+fun ClassOrInterfaceDeclaration.getCreator(config: Config): String {
     assertIsBuilder()
-    val parent = getParentNode() as ClassOrInterfaceDeclaration
-    val type = parent.getName()
+    val parent = parentNode as ClassOrInterfaceDeclaration
+    val type = parent.name
     val inline = if (config.inline) " inline " else " "
     val newBuilder = builderGetCtor()
     return """public${inline}fun build$type(fn: $type.Builder.() -> Unit): $type {
@@ -119,13 +118,12 @@ public fun ClassOrInterfaceDeclaration.getCreator(config: Config): String {
 }"""
 }
 
-public fun ClassOrInterfaceDeclaration.getRebuild(config: Config): String? {
+fun ClassOrInterfaceDeclaration.getRebuild(config: Config): String? {
     assertIsBuilder()
-    val parent = getParentNode() as ClassOrInterfaceDeclaration
-    val type = parent.getName()
+    val parent = parentNode as ClassOrInterfaceDeclaration
+    val type = parent.name
     val inline = if (config.inline) " inline " else " "
-    val newBuilder = builderGetCopyCtor()
-    if (newBuilder == null) return null
+    val newBuilder = builderGetCopyCtor() ?: return null
     return """public${inline}fun $type.rebuild(fn: $type.Builder.() -> Unit): $type {
     val builder = $type.$newBuilder(this)
     builder.fn()
@@ -133,7 +131,7 @@ public fun ClassOrInterfaceDeclaration.getRebuild(config: Config): String? {
 }"""
 }
 
-public fun ClassOrInterfaceDeclaration.getMethodStrings(config: Config): List<String> {
+fun ClassOrInterfaceDeclaration.getMethodStrings(config: Config): List<String> {
     val retval = arrayListOf(getCreator(config))
     val rebuild = getRebuild(config)
     if (rebuild != null) retval.add(rebuild)

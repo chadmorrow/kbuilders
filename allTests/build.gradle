@@ -5,6 +5,8 @@ apply plugin: 'net.jokubasdargis.build-timer'
 dependencies {
     compile project(':compiler')
     testCompile group: 'junit', name: 'junit', version: '4.11'
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+    testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
 }
 
 task cleanTests(type: Delete) {
@@ -20,4 +22,26 @@ gradle.projectsEvaluated {
     generateTests.dependsOn(':compiler:jar')
     generateTests.dependsOn(cleanTests)
     compileKotlin.dependsOn(generateTests)
+}
+buildscript {
+    ext.kotlin_version = '1.1.3-2'
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+repositories {
+    mavenCentral()
+}
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }

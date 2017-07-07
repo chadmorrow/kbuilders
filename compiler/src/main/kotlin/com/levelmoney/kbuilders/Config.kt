@@ -14,16 +14,6 @@
  * limitations under the License.
  */
 
-package com.levelmoney.kbuilders.javaparser.extensions
+package com.levelmoney.kbuilders
 
-import com.github.javaparser.ast.CompilationUnit
-import com.github.javaparser.ast.Node
-
-public fun Node.getPackageString(): String {
-    return when {
-        this is CompilationUnit -> {
-            getPackage().getName().getName()
-        }
-        else -> getParentNode().getPackageString()
-    }
-}
+data class Config (val inline: Boolean)

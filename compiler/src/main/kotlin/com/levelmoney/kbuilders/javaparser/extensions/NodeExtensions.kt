@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-package levelmoney.kbuilders.javaparser.extensions
+package com.levelmoney.kbuilders.javaparser.extensions
 
-import com.github.javaparser.ast.body.ConstructorDeclaration
+import com.github.javaparser.ast.CompilationUnit
+import com.github.javaparser.ast.Node
 
-public fun ConstructorDeclaration.hasParameters(count: Int? = null): Boolean {
-    val params = getParameters()
-    if (params == null) return count == 0
-    return count == null || params.size() == count
+fun Node.getPackageString(): String {
+    return when {
+        this is CompilationUnit -> {
+            `package`.name.name
+        }
+        else -> parentNode.getPackageString()
+    }
 }
