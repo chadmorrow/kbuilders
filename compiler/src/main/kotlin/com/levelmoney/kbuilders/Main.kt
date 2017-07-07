@@ -43,14 +43,12 @@ fun main(args: Array<String>) {
     )
 
     val dir = File(javaRoot)
-    val files = dir.walkTopDown()
-    files.forEach {
-        if(it.isFile) {
-            val pkgAndText = generatePackageAndText(it, config)
-            if (pkgAndText != null) {
+    dir.walkTopDown().forEach {
+        if (it.isFile) {
+            generatePackageAndText(it, config)?.apply {
                 val name = it.name.replace("." + it.extension, ".kt")
-                val (pkg, text) = pkgAndText
-                val dest = File(kotlinRoot, pkg.split("\\.").joinToString("/") + "/" + name)
+                val (pkg, text) = this
+                val dest = File(kotlinRoot, pkg.split(".").joinToString("/") + "/" + name)
                 dest.parentFile.mkdirs()
                 dest.writeText(text)
             }
