@@ -16,4 +16,4 @@
 
 package com.levelmoney.kbuilders
 
-data class Config (val inline: Boolean)
+data class Config (val inline: Boolean = true)

@@ -14,7 +14,7 @@ jar {
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    compile 'com.github.javaparser:javaparser-core:2.0.0'
+    compile 'com.github.javaparser:javaparser-core:2.0.0' // todo update to latest javapareser
     compile 'net.sf.jopt-simple:jopt-simple:4.9-beta-1'
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }

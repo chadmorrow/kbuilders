@@ -65,7 +65,7 @@ fun generatePackageAndText(file: File, config: Config): Pair<String, String>? {
     val imports = cu.getRequiredImports()
     val builders = cu.getBuilders()
     if (builders.isEmpty()) return null
-    val methods = cu.getBuilders().flatMap { it.getMethodStrings(config) }
+    val methods = cu.getBuilders().flatMap { it.getMethodStrings() }
     return Pair(pakage,
             """package $pakage
 

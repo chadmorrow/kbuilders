@@ -16,9 +16,11 @@
 
 package com.levelmoney.kbuilders.javaparser.extensions
 
-import com.github.javaparser.ast.body.*
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
+import com.github.javaparser.ast.body.ConstructorDeclaration
+import com.github.javaparser.ast.body.MethodDeclaration
+import com.github.javaparser.ast.body.ModifierSet
 import com.github.javaparser.ast.type.ReferenceType
-import com.levelmoney.kbuilders.Config
 
 fun ClassOrInterfaceDeclaration.getInternalClasses(): List<ClassOrInterfaceDeclaration> {
     return members.filterIsInstance<ClassOrInterfaceDeclaration>()
@@ -35,7 +37,7 @@ fun ClassOrInterfaceDeclaration.getBuilderClass(): ClassOrInterfaceDeclaration? 
 
 fun ClassOrInterfaceDeclaration.getBuilderMethods(): List<MethodDeclaration> {
     return getMethods().filter {
-        it.type.toString() == name && it.parameters?.size?:0 > 0
+        it.type.toString() == name && it.parameters?.size ?: 0 > 0
     }
 }
 
@@ -63,13 +65,13 @@ private fun ClassOrInterfaceDeclaration.getParentStaticFactory(): MethodDeclarat
 private fun ClassOrInterfaceDeclaration.getParentCopyStaticFactory(): MethodDeclaration? {
     return getParentClass()!!.getMethods().firstOrNull {
         it.hasParameters(1)
-                && it.parameters[0].type.toString() == getParentClass()!!.name
+                && it.parameters[0].type.toString().split('.').last() == getParentClass()!!.name
                 && it.name == "newBuilder"
     }
 }
 
 fun ClassOrInterfaceDeclaration.getBuildMethod(): MethodDeclaration? {
-    return getMethods().firstOrNull { it.isBuildMethod () }
+    return getMethods().firstOrNull { it.isBuildMethod() }
 }
 
 fun ClassOrInterfaceDeclaration.isBuilder(): Boolean {
@@ -99,43 +101,42 @@ fun ClassOrInterfaceDeclaration.assertIsBuilder() {
  * Thanks Google...
  */
 private fun ClassOrInterfaceDeclaration.builderGetCtor(): String {
-    return getDefaultCtor()?.name ?:getParentStaticFactory()!!.name
-}
-private fun ClassOrInterfaceDeclaration.builderGetCopyCtor(): String? {
-    return getCopyCtor()?.name ?:getParentCopyStaticFactory()?.name
+    return getDefaultCtor()?.name ?: getParentStaticFactory()!!.name
 }
 
-fun ClassOrInterfaceDeclaration.getCreator(config: Config): String {
+private fun ClassOrInterfaceDeclaration.builderGetCopyCtor(): String? {
+    return getCopyCtor()?.name ?: getParentCopyStaticFactory()?.name
+}
+
+fun ClassOrInterfaceDeclaration.getCreator(): String {
     assertIsBuilder()
     val parent = parentNode as ClassOrInterfaceDeclaration
     val type = parent.name
-    val inline = if (config.inline) " inline " else " "
     val newBuilder = builderGetCtor()
-    return """public${inline}fun build$type(fn: $type.Builder.() -> Unit): $type {
+    return """public inline fun build$type(fn: $type.Builder.() -> Unit): $type {
     val builder = $type.$newBuilder()
     builder.fn()
     return builder.build()
 }"""
 }
 
-fun ClassOrInterfaceDeclaration.getRebuild(config: Config): String? {
+fun ClassOrInterfaceDeclaration.getRebuild(): String? {
     assertIsBuilder()
     val parent = parentNode as ClassOrInterfaceDeclaration
     val type = parent.name
-    val inline = if (config.inline) " inline " else " "
     val newBuilder = builderGetCopyCtor() ?: return null
-    return """public${inline}fun $type.rebuild(fn: $type.Builder.() -> Unit): $type {
+    return """public inline fun $type.rebuild(fn: $type.Builder.() -> Unit): $type {
     val builder = $type.$newBuilder(this)
     builder.fn()
     return builder.build()
 }"""
 }
 
-fun ClassOrInterfaceDeclaration.getMethodStrings(config: Config): List<String> {
-    val retval = arrayListOf(getCreator(config))
-    val rebuild = getRebuild(config)
+fun ClassOrInterfaceDeclaration.getMethodStrings(): List<String> {
+    val retval = arrayListOf(getCreator())
+    val rebuild = getRebuild()
     if (rebuild != null) retval.add(rebuild)
-    // This would enable k-combinator syntax for every property in the builder. We can re-enable if people want it.
+//    This would enable k-combinator syntax for every property in the builder. We can re-enable if people want it.
 //    retval.addAll(getBuilderMethods().flatMap { it.toKotlin(config) })
     return retval
 }
